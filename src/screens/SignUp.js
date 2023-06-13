@@ -7,23 +7,41 @@ import {
   Button,
   Image,
   ScrollView,
+  TouchableOpacity,
+  Alert
 } from "react-native";
 import { Formik } from "formik";
 import * as Yup from "yup";
 import axios from "axios";
+import { useState } from "react";
+import * as Font from "expo-font";
+import Spinner from 'react-native-loading-spinner-overlay';
 
-const BASE_URL = 'https://elitehomestest.onrender.com/api/v1';
+// Define a function to load the custom fonts
+async function loadFonts() {
+  await Font.loadAsync({
+    Montserrat: require("../../assets/fonts/Montserrat-Regular.ttf"),
+    MontserratSemiBold: require("../../assets/fonts/Montserrat-SemiBold.ttf"),
+  });
+}
+
+// Call the function to load the fonts
+loadFonts();
+
+const BASE_URL = "https://elitehomestest.onrender.com/api/v1";
 
 const SignUp = ({ navigation }) => {
+  const [loading, setloading] = useState(false);
+
   const initialValues = {
     username: "",
-    first_name: "Hneyr",
+    first_name: "Henry",
     last_name: "Jhon",
     email: "",
     password: "",
     confirm_password: "",
     phone_number: "",
-    is_landlord: 0
+    is_landlord: 0,
   };
 
   const validationSchema = Yup.object().shape({
@@ -37,6 +55,7 @@ const SignUp = ({ navigation }) => {
   });
 
   const handleSubmit = async (values, { setSubmitting, resetForm }) => {
+    setloading(true);
     try {
       // Make API call to submit form data
       const response = await axios.post(`${BASE_URL}/register`, values);
@@ -50,11 +69,11 @@ const SignUp = ({ navigation }) => {
     } catch (error) {
       // Handle error response
       console.log(error.response.data);
+      Alert.alert('Error', error.response.data.message);
     }
-
+    setloading(false);
     setSubmitting(false);
   };
-
 
   const LoginHandler = () => {
     navigation.navigate("Login");
@@ -88,7 +107,7 @@ const SignUp = ({ navigation }) => {
             errors,
             touched,
           }) => (
-            <View>
+            <View style={styles.formContainer}>
               <TextInput
                 style={styles.input}
                 onChangeText={handleChange("username")}
@@ -145,86 +164,25 @@ const SignUp = ({ navigation }) => {
               {touched.phone_number && errors.phone_number && (
                 <Text style={styles.error}>{errors.phone_number}</Text>
               )}
-
-              <View style={styles.Button}>
-                <Button title="Submit" onPress={handleSubmit} color="#ffffff" />
-              </View>
+              <TouchableOpacity style={styles.Button} onPress={handleSubmit}>
+                <Text style={styles.ButtonText}>
+                  Submit
+                </Text>
+                <Spinner visible={loading} textContent={'Loading...'} textStyle={{ color: '#FFF' }} />
+              </TouchableOpacity>
 
               <Text style={styles.AlreadyHaveAnAccount}>
-              Already have an account?{" "}
-              <Text
-                style={styles.AlreadyHaveAnAccountText}
-                onPress={LoginHandler}
-              >
-                Sign Up
+                Already have an account?{" "}
+                <Text
+                  style={styles.AlreadyHaveAnAccountText}
+                  onPress={LoginHandler}
+                >
+                  Log In
+                </Text>
               </Text>
-            </Text>
             </View>
           )}
         </Formik>
-        {/* <Formik
-          initialValues={{
-            name: "",
-            password: "",
-            confirm_password: "",
-            email: "",
-            phone: "",
-          }}
-          onSubmit={(values) => {
-            console.log(values);
-          }}
-        >
-          {(props) => (
-            <View>
-              <TextInput
-                style={styles.input}
-                placeholder="Name"
-                onChangeText={props.handleChange("name")}
-                value={props.values.name}
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                onChangeText={props.handleChange("password")}
-                value={props.values.email}
-                secureTextEntry
-              />
-
-              <TextInput
-                style={styles.input}
-                placeholder="Confirm Password"
-                onChangeText={props.handleChange("confirm_password")}
-                value={props.values.confirm_password}
-                secureTextEntry
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Email Address"
-                onChangeText={props.handleChange("email")}
-                value={props.values.email}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Phone Number"
-                onChangeText={props.handleChange("phone")}
-                value={props.values.phone}
-              />
-
-              <View style={styles.Button}>
-                <Button
-                  title="Continue"
-                  color="#ffffff"
-                  onPress={SignUpHandler}
-                />
-              </View>
-              <Text style={styles.AlreadyHaveAnAccount}>
-                Already have an account?{" "}
-                <Text style={styles.AlreadyHaveAnAccountText} onPress={LoginHandler}>Log In</Text>
-              </Text>
-            </View>
-          )}
-        </Formik> */}
       </ScrollView>
     </View>
   );
@@ -232,18 +190,17 @@ const SignUp = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: {
-    flex: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingTop: 80,
-    backgroundColor: "#ffffff",
+    backgroundColor: "white",
   },
   ImageContainer: {
     justifyContent: "center",
     alignItems: "center",
   },
   Image: {
-    width: 200,
+    width: 350,
     height: 170,
     marginBottom: 32,
   },
@@ -251,38 +208,54 @@ const styles = StyleSheet.create({
     backgroundColor: "#d9d9d9",
     borderRadius: 10,
     paddingVertical: 20,
-    paddingRight: "60%",
     paddingLeft: 10,
     marginVertical: 10,
-    width: "80vw"
+    width: "100%",
+    fontFamily: "Montserrat",
   },
   Button: {
     backgroundColor: "#2e70cb",
     borderRadius: 10,
     paddingVertical: 10,
     color: "white",
+    marginVertical: 8,
+  },
+  ButtonText: {
+    fontFamily: "Montserrat",
+    textAlign: "center",
+    color: "white",
   },
   EliteHomes: {
     fontSize: 32,
     marginVertical: 16,
     textAlign: "center",
+    fontFamily: "Montserrat",
   },
   GetStartedText: {
     fontSize: 16,
     textAlign: "center",
+    fontFamily: "Montserrat",
   },
   AlreadyHaveAnAccount: {
     marginTop: 16,
     textAlign: "center",
+    fontFamily: "Montserrat",
+    marginVertical: 16,
   },
   AlreadyHaveAnAccountText: {
     color: "#2e70cb",
     fontWeight: 700,
+    fontFamily: "MontserratSemiBold",
   },
   WelcomeText: {
     color: "#2e70cb",
     fontWeight: 700,
     textAlign: "center",
+    fontSize: 26,
+    fontFamily: "MontserratSemiBold",
+  },
+  error: {
+    color: "red",
   },
 });
 

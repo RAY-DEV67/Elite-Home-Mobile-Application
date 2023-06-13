@@ -1,12 +1,28 @@
 import React from "react";
-import { StyleSheet, Text, View, TextInput, Button, Image } from "react-native";
+import { StyleSheet, Text, View, TextInput, Button, Image, TouchableOpacity, Alert } from "react-native";
 import { Formik } from "formik";
 import * as Yup from "yup";
+import Spinner from 'react-native-loading-spinner-overlay';
 import axios from "axios";
+import { useState } from "react";
+import * as Font from "expo-font";
+
+// Define a function to load the custom fonts
+async function loadFonts() {
+  await Font.loadAsync({
+    Montserrat: require("../../assets/fonts/Montserrat-Regular.ttf"),
+    MontserratSemiBold: require("../../assets/fonts/Montserrat-SemiBold.ttf"),
+  });
+}
+
+// Call the function to load the fonts
+loadFonts();
 
 const BASE_URL = "https://elitehomestest.onrender.com/api/v1";
 
 const Login = ({ navigation }) => {
+  const [loading, setloading] = useState(false);
+
   const initialValues = {
     email: "",
     password: "",
@@ -18,6 +34,7 @@ const Login = ({ navigation }) => {
   });
 
   const handleSubmit = async (values, { setSubmitting }) => {
+    setloading(true);
     try {
       // Make API call to log in with email and password
       const response = await axios.post(`${BASE_URL}/login`, values);
@@ -30,8 +47,9 @@ const Login = ({ navigation }) => {
     } catch (error) {
       // Handle error response
       console.log(error.response.data);
+      Alert.alert('Error', error.response.data.message);
     }
-
+    setloading(false);
     setSubmitting(false);
   };
 
@@ -61,7 +79,7 @@ const Login = ({ navigation }) => {
           errors,
           touched,
         }) => (
-          <View>
+          <View style={styles.formContainer}>
             <TextInput
               style={styles.input}
               onChangeText={handleChange("email")}
@@ -83,9 +101,10 @@ const Login = ({ navigation }) => {
             {touched.password && errors.password && (
               <Text style={styles.error}>{errors.password}</Text>
             )}
-            <View style={styles.Button}>
-              <Button title="Log In" onPress={handleSubmit} color="#ffffff"/>
-            </View>
+            <TouchableOpacity style={styles.Button} onPress={handleSubmit}>
+              <Text style={styles.ButtonText}>Log In</Text>
+              <Spinner visible={loading} textContent={'Loading...'} textStyle={{ color: '#FFF' }} />
+            </TouchableOpacity>
             <Text style={styles.DontHaveAnAccount}>
               Dont have an account?{" "}
               <Text
@@ -110,54 +129,62 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
   Image: {
-    width: 200,
+    width: "80%",
     height: 170,
     marginBottom: 32,
+  },
+  formContainer: {
+    width: "80%",
   },
   input: {
     backgroundColor: "#d9d9d9",
     borderRadius: 10,
     paddingVertical: 20,
-    paddingRight: "70%",
     paddingLeft: 10,
     marginVertical: 10,
-    width: "80vw"
+    fontFamily: "Montserrat",
   },
   Button: {
     backgroundColor: "#2e70cb",
     borderRadius: 10,
-    paddingVertical: 10,
+    paddingVertical: 16,
+    marginTop: 8,
+  },
+  ButtonText: {
+    fontFamily: "Montserrat",
+    textAlign: "center",
+    color: "white"
   },
   EliteHomes: {
     fontSize: 32,
+    fontFamily: "Montserrat",
   },
   Hello: {
     fontSize: 26,
     marginVertical: 16,
+    fontFamily: "Montserrat",
   },
   LoginText: {
     fontSize: 16,
-  },
-  ForgotPassword: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 16,
+    fontFamily: "Montserrat",
   },
   DontHaveAnAccount: {
     marginTop: 16,
     textAlign: "center",
-  },
-  ForgotPasswordText: {
-    color: "#2e70cb",
-    fontWeight: 700,
+    fontFamily: "Montserrat",
   },
   DontHaveAnAccountText: {
     color: "#2e70cb",
     fontWeight: 700,
+    fontFamily: "MontserratSemiBold",
   },
   HelloText: {
     color: "#2e70cb",
     fontWeight: 700,
+    fontFamily: "MontserratSemiBold",
+  },
+  error: {
+    color: "red",
   },
 });
 
