@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import axios from "axios";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,9 +8,13 @@ import {
   Button,
   ScrollView,
   TextInput,
+  TouchableOpacity,
+  Dimensions,
 } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Font from "expo-font";
+
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 // Define a function to load the custom fonts
 async function loadFonts() {
@@ -23,41 +28,77 @@ async function loadFonts() {
 // Call the function to load the fonts
 loadFonts();
 
-
 export default function PropertyDetails({ route, navigation }) {
   const { item } = route.params;
+  const { image } = route.params;
 
-  const pressHandler = () => {
-    navigation.navigate("Login");
-  };
+  const [loading, setloading] = useState(false);
+  const [properties, setproperties] = useState({});
+  const [fetched, setfetched] = useState(false);
 
+  useEffect(() => {
+    setloading(true);
+    const fetchData = async () => {
+      try {
+        const response = await axios.get(
+          `http://54.210.116.44/api/v1/properties/${item}`
+        );
+        setproperties(response.data.data);
+        setloading(false);
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  console.log(image[0])
+
+  // Check if the properties object is empty or undefined
+  if (loading || !properties) {
+    return (
+      <View>
+        <Text>Loading...</Text>
+      </View>
+    );
+  }
   return (
     <View style={styles.Container}>
       <ScrollView>
-        <View style={styles.Head}>
-          <Text style={styles.Logo}>Elite Home</Text>
-          <MaterialCommunityIcons
-            name="face-man-profile"
-            size={24}
-            color="black"
-            onPress={pressHandler}
-          />
-        </View>
         <View style={styles.priceContainer}>
-          <Text style={styles.title}>{item.title}</Text>
-          <Text style={styles.price}>Price: {item.price}$</Text>
+          {properties.property_name && (
+            <Text style={styles.title}>{properties.property_name}</Text>
+          )}
+          {properties.property_price && (
+            <Text style={styles.price}>
+              Price: {properties.property_price}$
+            </Text>
+          )}
         </View>
         <View style={styles.idContainer}>
           <View style={styles.RentOrSale}>
             <Text style={styles.RentOrSaleText}>For Rent</Text>
           </View>
-          <Text>Apartment</Text>
-          <Text>Property ID: 123456789</Text>
+          <Text style={styles.TextFont}>Apartment</Text>
+          {properties.id && (
+            <Text style={styles.TextFont}>Property ID: {properties?.id}</Text>
+          )}
         </View>
-        <Image source={item.image} style={styles.ProductImage} />
+        {properties.property_other_image_url && (
+          <Image
+          source={{uri : properties.property_other_image_url[0]}}
+          style={styles.ProductImage}
+          onError={(error) => console.error("Image Error:", error)}
+        />
+        )}
         <View style={styles.descriptionContainer}>
           <Text style={styles.descriptionHeader}>Description</Text>
-          <Text style={styles.description}>{item.longDescription}</Text>
+          {properties.property_description && (
+            <Text style={styles.description}>
+              {properties.property_description}
+            </Text>
+          )}
         </View>
 
         <View style={styles.propertyDetailsContainer}>
@@ -72,21 +113,33 @@ export default function PropertyDetails({ route, navigation }) {
                 source={require("../../assets/floorPlanIcon.jpg")}
                 style={styles.Icon}
               />
-              <Text style={styles.TextFont}>Size: {item.size}</Text>
+              {properties.property_total_floor_area && (
+                <Text style={styles.TextFont}>
+                  Size: {properties.property_total_floor_area}
+                </Text>
+              )}
             </View>
             <View style={styles.bedrooms}>
               <Image
                 source={require("../../assets/bedroomIcon.jpg")}
                 style={styles.Icon}
               />
-              <Text style={styles.TextFont}>Bedrooms: {item.bedroom}</Text>
+              {properties.property_bedroom_number && (
+                <Text style={styles.TextFont}>
+                  Bedrooms: {properties.property_bedroom_number}
+                </Text>
+              )}
             </View>
             <View style={styles.bathrooms}>
               <Image
                 source={require("../../assets/bathroomIcon.jpg")}
                 style={styles.Icon}
               />
-              <Text style={styles.TextFont}>Bathrooms: {item.bathroom}</Text>
+              {properties.property_toilet_number && (
+                <Text style={styles.TextFont}>
+                  Bathrooms: {properties?.property_toilet_number}
+                </Text>
+              )}
             </View>
           </View>
         </View>
@@ -105,28 +158,44 @@ export default function PropertyDetails({ route, navigation }) {
 
         <View style={styles.profileContainer}>
           <View style={styles.ownerDetailsContainer}>
-            <Image source={item.ownerPicture} style={styles.ownerImage} />
+            {/* <Image
+              source={{ uri: properties?.property_owner.profile_picture }}
+              style={styles.ownerImage}
+            /> */}
             <View style={styles.ownerDetailsText}>
               <Text style={styles.TextFont}>Elite Homes</Text>
-              <Text style={styles.ownerName}>{item.ownerName}</Text>
-              <Text style={styles.ownerAddress}>{item.ownerAddress}</Text>
+              {properties.property_owner && (
+                <Text style={styles.ownerName}>
+                  {properties.property_owner.full_name}
+                </Text>
+              )}
             </View>
           </View>
           <View style={styles.phoneContainer}>
             <Text style={styles.phone}>Mobile Phone</Text>
-            <Text style={styles.TextFont}>{item.phoneNumber}</Text>
+            {properties.property_owner && (
+              <Text style={styles.TextFont}>
+                {properties.property_owner.phone_number}
+              </Text>
+            )}
           </View>
           <View style={styles.idNumberContainer}>
             <Text style={styles.id}>Id Number</Text>
-            <Text style={styles.TextFont}>{item.idNumber}</Text>
+            {properties.id && (
+              <Text style={styles.TextFont}>{properties?.id}</Text>
+            )}
           </View>
           <View style={styles.emailContainer}>
             <Text style={styles.email}>Email</Text>
-            <Text style={styles.TextFont}>{item.email}</Text>
+            {properties.property_owner && (
+              <Text style={styles.TextFont}>
+                {properties?.property_owner.email}
+              </Text>
+            )}
           </View>
-          <View style={styles.Button}>
-            <Button title="View my properties" color="#ffffff" />
-          </View>
+          <TouchableOpacity style={styles.Button}>
+            <Text style={styles.ButtonText}>View My Properties</Text>
+          </TouchableOpacity>
         </View>
 
         <View style={styles.scheduleContainer}>
@@ -139,9 +208,9 @@ export default function PropertyDetails({ route, navigation }) {
           <TextInput style={styles.input} placeholder="Your Email*" />
           <TextInput style={styles.input} placeholder="Your Phone*" />
           <TextInput style={styles.input} placeholder="Message" />
-          <View style={styles.Button}>
-            <Button title="Make Enquiry" color="#ffffff" />
-          </View>
+          <TouchableOpacity style={styles.Button}>
+            <Text style={styles.ButtonText}>Make Enquiry</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </View>
@@ -151,14 +220,18 @@ export default function PropertyDetails({ route, navigation }) {
 const styles = StyleSheet.create({
   Container: {
     backgroundColor: "white",
+    paddingTop: "5%",
   },
   Head: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 16,
-    paddingTop: "3%",
-    paddingBottom: 20,
+    paddingBottom: 10,
+    marginBottom: 16,
+    paddingTop: "10%",
+    borderBottomWidth: 1,
+    borderColor: "#d9d9d9",
   },
   Logo: {
     fontWeight: 800,
@@ -166,7 +239,8 @@ const styles = StyleSheet.create({
     fontFamily: "MontserratBold",
   },
   ProductImage: {
-    width: "100%",
+    width: screenWidth,
+    height: screenHeight/3,
   },
   priceContainer: {
     flexDirection: "row",
@@ -175,18 +249,19 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   price: {
-    fontSize: 16,
+    fontSize: 12,
     fontWeight: 600,
     fontFamily: "MontserratSemiBold",
   },
   title: {
-    fontSize: 24,
+    fontSize: 20,
     fontWeight: 600,
     fontFamily: "MontserratSemiBold",
+    width: screenWidth / 1.5,
   },
   idContainer: {
     marginHorizontal: 16,
-    width: "70%",
+    width: "80%",
     justifyContent: "space-between",
     flexDirection: "row",
     marginVertical: 16,
@@ -200,26 +275,29 @@ const styles = StyleSheet.create({
   },
   RentOrSaleText: {
     color: "white",
+    fontFamily: "Montserrat",
+    fontSize: 12,
   },
   descriptionContainer: {
     marginVertical: 16,
     marginHorizontal: 16,
   },
   descriptionHeader: {
-    fontSize: 32,
+    fontSize: 20,
     marginBottom: 16,
     fontWeight: 600,
     fontFamily: "MontserratSemiBold",
   },
   description: {
     fontFamily: "Montserrat",
+    fontSize: 12,
   },
   propertyDetailsContainer: {
     marginVertical: 16,
     marginHorizontal: 16,
   },
   propertyDetailsHeader: {
-    fontSize: 32,
+    fontSize: 20,
     marginBottom: 16,
     fontWeight: 600,
     fontFamily: "MontserratSemiBold",
@@ -229,9 +307,11 @@ const styles = StyleSheet.create({
   },
   propertyDetails: {
     fontFamily: "Montserrat",
+    fontSize: 12,
   },
   TextFont: {
     fontFamily: "Montserrat",
+    fontSize: 12,
   },
   bedrooms: {
     paddingVertical: 16,
@@ -259,10 +339,16 @@ const styles = StyleSheet.create({
     paddingLeft: 10,
     marginVertical: 10,
     fontFamily: "Montserrat",
+    fontSize: 12,
   },
   Button: {
     backgroundColor: "#2e70cb",
     paddingVertical: 15,
+  },
+  ButtonText: {
+    fontFamily: "Montserrat",
+    textAlign: "center",
+    color: "white",
   },
   floorContainer: {
     marginHorizontal: 16,
@@ -272,7 +358,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
   },
   floorHeader: {
-    fontSize: 32,
+    fontSize: 20,
     marginBottom: 16,
     fontWeight: 600,
     fontFamily: "MontserratSemiBold",
@@ -280,6 +366,7 @@ const styles = StyleSheet.create({
   floorDetails: {
     marginBottom: 16,
     fontFamily: "Montserrat",
+    fontSize: 12,
   },
   profileContainer: {
     marginHorizontal: 16,
@@ -297,7 +384,7 @@ const styles = StyleSheet.create({
     marginLeft: 16,
   },
   ownerName: {
-    fontSize: 28,
+    fontSize: 20,
     marginVertical: 4,
     fontFamily: "MontserratSemiBold",
   },
@@ -321,23 +408,27 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 12,
-    marginBottom: 16
+    marginBottom: 16,
   },
   ownerAddress: {
     color: "#6a6b6c",
     fontFamily: "Montserrat",
+    fontSize: 12,
   },
-  phone:{
+  phone: {
     color: "#6a6b6c",
     fontFamily: "Montserrat",
+    fontSize: 12,
   },
-  id:{
+  id: {
     color: "#6a6b6c",
     fontFamily: "Montserrat",
+    fontSize: 12,
   },
-  email:{
+  email: {
     color: "#6a6b6c",
     fontFamily: "Montserrat",
+    fontSize: 12,
   },
   scheduleContainer: {
     marginHorizontal: 16,
@@ -345,10 +436,10 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f5f5",
     borderWidth: 1,
     borderColor: "#d9d9d9",
-    marginBottom: 16
+    marginBottom: 16,
   },
   scheduleHeader: {
-    fontSize: 32,
+    fontSize: 20,
     marginBottom: 16,
     fontWeight: 600,
     fontFamily: "MontserratSemiBold",

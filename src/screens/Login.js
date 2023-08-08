@@ -1,11 +1,22 @@
 import React from "react";
-import { StyleSheet, Text, View, TextInput, Button, Image, TouchableOpacity, Alert } from "react-native";
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  Button,
+  Image,
+  TouchableOpacity,
+  Alert,
+} from "react-native";
 import { Formik } from "formik";
 import * as Yup from "yup";
-import Spinner from 'react-native-loading-spinner-overlay';
+import Spinner from "react-native-loading-spinner-overlay";
 import axios from "axios";
-import { useState } from "react";
+import { useState, useContext } from "react";
+import { SetUserId, SetUserLogged, UserId, UserLogged } from "../../App";
 import * as Font from "expo-font";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 // Define a function to load the custom fonts
 async function loadFonts() {
@@ -18,9 +29,10 @@ async function loadFonts() {
 // Call the function to load the fonts
 loadFonts();
 
-const BASE_URL = "https://elitehomestest.onrender.com/api/v1";
+const BASE_URL = "http://54.210.116.44/api/v1";
 
 const Login = ({ navigation }) => {
+  const setUserId = useContext(SetUserLogged);
   const [loading, setloading] = useState(false);
 
   const initialValues = {
@@ -33,6 +45,18 @@ const Login = ({ navigation }) => {
     password: Yup.string().required("Password is required"),
   });
 
+  // Assuming you have a function to handle the completion of onboarding
+const handleOnboardingComplete = async () => {
+  try {
+    // Set onboarded as true in AsyncStorage
+    await AsyncStorage.setItem("onboarded", "true");
+
+  } catch (error) {
+    console.error("Error setting onboarded status:", error);
+  }
+};
+
+
   const handleSubmit = async (values, { setSubmitting }) => {
     setloading(true);
     try {
@@ -40,30 +64,34 @@ const Login = ({ navigation }) => {
       const response = await axios.post(`${BASE_URL}/login`, values);
 
       // Handle success response
-      console.log(response.data);
-      navigation.navigate("Home");
-
-      // TODO: Perform actions after successful login, such as storing tokens or redirecting to another screen
+      setUserId(true);
+      Alert.alert("Success", "Log In Successful");
+      console.log(response.data.data);
+      handleOnboardingComplete()
+      navigation.navigate("AfterHome");
+      await AsyncStorage.setItem(
+        "userData",
+        JSON.stringify(response.data.data.userId)
+      );
+      await AsyncStorage.setItem(
+        "accessToken",
+        JSON.stringify(response.data.token)
+      );
     } catch (error) {
       // Handle error response
       console.log(error.response.data);
-      Alert.alert('Error', error.response.data.message);
+      Alert.alert("Error", error.response.data.message);
     }
     setloading(false);
     setSubmitting(false);
   };
 
   const SignUpHandler = () => {
-    navigation.navigate("SignUp");
+    navigation.navigate("Create An Account");
   };
   return (
     <View style={styles.container}>
-      <Image source={require("../../assets/login.png")} style={styles.Image} />
-      <Text style={styles.EliteHomes}>Elite Homes</Text>
-      <Text style={styles.Hello}>
-        <Text style={styles.HelloText}>Hello!</Text> Welcome back
-      </Text>
-      <Text style={styles.LoginText}>
+      <Text style={styles.GetStartedText}>
         Log in with the data you entered during sign up
       </Text>
       <Formik
@@ -103,7 +131,11 @@ const Login = ({ navigation }) => {
             )}
             <TouchableOpacity style={styles.Button} onPress={handleSubmit}>
               <Text style={styles.ButtonText}>Log In</Text>
-              <Spinner visible={loading} textContent={'Loading...'} textStyle={{ color: '#FFF' }} />
+              <Spinner
+                visible={loading}
+                textContent={"Loading..."}
+                textStyle={{ color: "#FFF" }}
+              />
             </TouchableOpacity>
             <Text style={styles.DontHaveAnAccount}>
               Dont have an account?{" "}
@@ -123,10 +155,16 @@ const Login = ({ navigation }) => {
 
 const styles = StyleSheet.create({
   container: {
+    padding: 16,
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
+    justifyContent: "flex-start",
+    alignItems: "flex-start",
     backgroundColor: "#ffffff",
+  },
+  GetStartedText: {
+    width: "50%",
+    fontSize: 16,
+    fontWeight: 400,
   },
   Image: {
     width: "80%",
@@ -137,13 +175,17 @@ const styles = StyleSheet.create({
     width: "80%",
   },
   input: {
-    backgroundColor: "#d9d9d9",
+    backgroundColor: "#f9f9f9",
     borderRadius: 10,
     paddingVertical: 20,
     paddingLeft: 10,
     marginVertical: 10,
     fontFamily: "Montserrat",
+    width: "120%",
+    borderWidth: 0.5,
+    borderColor: "#d9d9d9",
   },
+
   Button: {
     backgroundColor: "#2e70cb",
     borderRadius: 10,
@@ -153,7 +195,7 @@ const styles = StyleSheet.create({
   ButtonText: {
     fontFamily: "Montserrat",
     textAlign: "center",
-    color: "white"
+    color: "white",
   },
   EliteHomes: {
     fontSize: 32,

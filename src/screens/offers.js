@@ -1,5 +1,5 @@
+import Checkbox from "expo-checkbox";
 import React, { useState, useEffect } from "react";
-import { FontAwesome } from "@expo/vector-icons";
 import {
   View,
   Text,
@@ -7,7 +7,6 @@ import {
   Image,
   Button,
   FlatList,
-  Dimensions,
   TouchableOpacity,
   ScrollView,
 } from "react-native";
@@ -16,8 +15,6 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { MaterialIcons } from "@expo/vector-icons";
 import * as Font from "expo-font";
 import axios from "axios";
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 // Define a function to load the custom fonts
 async function loadFonts() {
@@ -31,7 +28,7 @@ async function loadFonts() {
 // Call the function to load the fonts
 loadFonts();
 
-const Home = ({ navigation }) => {
+const Offers = ({ navigation }) => {
   const [loading, setloading] = useState(false);
   const [properties, setproperties] = useState([]);
 
@@ -52,28 +49,39 @@ const Home = ({ navigation }) => {
     fetchData();
   }, []);
 
+  console.log("Property", properties);
+
   return (
     <View style={styles.Container}>
       <ScrollView>
         <View style={styles.PropertyContainer}>
-          <Text style={styles.PropertySearch}>
-            Our Choices Of Popular{" "}
-            <Text style={styles.realEstate}>Real Estate</Text> Properties
-          </Text>
-          <View style={styles.SearchContainer}>
-            <View style={styles.Search}>
-              <TouchableOpacity style={styles.icon}>
-                <FontAwesome name="search" size={24} color="black" />
-              </TouchableOpacity>
-              <TextInput
-                placeholderTextColor="gray"
-                placeholder="Search"
-                onChangeText={(text) => setsearch(text)}
+          <View style={styles.FilterContainer}>
+            <View style={styles.Category}>
+              <Text style={styles.CategoryText}>Category</Text>
+              <MaterialIcons
+                name="keyboard-arrow-down"
+                size={24}
+                color="black"
               />
+            </View>
+
+            <View style={styles.PropertyBedroom}>
+              <View style={styles.bedroom}>
+                <Text>Bedroom: </Text>
+                <Checkbox />
+              </View>
+              <View style={styles.bathroom}>
+                <Text>Bathroom: </Text>
+                <Checkbox />
+              </View>
+            </View>
+
+            <TextInput placeholder="Search Location" style={styles.input} />
+            <View style={styles.Button}>
+              <Text style={styles.ButtonText}>Search</Text>
             </View>
           </View>
         </View>
-
         {loading ? (
           <Text style={styles.load}>Loading...</Text>
         ) : (
@@ -94,15 +102,12 @@ const Home = ({ navigation }) => {
                   style={styles.FlatlistContent}
                   key={item.id}
                   onPress={() =>
-                    navigation.navigate("PropertyDetails", {
-                      item: item.id,
-                      image: item.property_other_image_url,
-                    })
+                    navigation.navigate("PropertyDetails", { item: item.id })
                   }
                 >
                   <View>
                     <Image
-                      source={{uri : item.property_other_image_url[0]}}
+                      source={{ uri: item.property_other_image_url[0] }}
                       style={styles.ProductImage}
                     />
                     <Text style={styles.location}>{item.property_address}</Text>
@@ -152,7 +157,9 @@ const Home = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  Container: {},
+  Container: {
+    backgroundColor: "white",
+  },
   Head: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -207,13 +214,8 @@ const styles = StyleSheet.create({
   },
   PropertySearch: {
     marginVertical: 16,
-    fontSize: screenWidth / 16,
+    fontSize: 20,
     fontFamily: "MontserratSemiBold",
-    paddingTop: screenHeight / 15,
-    width: screenWidth / 1.5,
-  },
-  realEstate: {
-    color: "#2e70cb",
   },
   input: {
     paddingVertical: 20,
@@ -242,6 +244,7 @@ const styles = StyleSheet.create({
   FilterContainer: {
     padding: 20,
     backgroundColor: "#f5f5f5",
+    marginTop: 20,
   },
   FlatlistContent: {
     width: "48%",
@@ -322,19 +325,16 @@ const styles = StyleSheet.create({
   load: {
     textAlign: "center",
   },
-  Search: {
+  bedroom: {
     display: "flex",
     flexDirection: "row",
+    alignItems: "center",
   },
-  SearchContainer: {
-    backgroundColor: "white",
-    width: screenWidth / 1.1,
-    borderRadius: 50,
-    padding: 8,
-  },
-  icon: {
-    marginRight: 12,
+  bathroom: {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
   },
 });
 
-export default Home;
+export default Offers;
